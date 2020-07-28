@@ -68,8 +68,8 @@
             const myMSALObj = new msal.PublicClientApplication(msalConfig);
             const currentAccounts = myMSALObj.getAllAccounts();
             if (currentAccounts === null) {
-                //myMSALObj.loginRedirect(loginRequest);
-                myMSALObj.loginPopup(loginRequest);
+                myMSALObj.loginRedirect(loginRequest);
+                //myMSALObj.loginPopup(loginRequest);
                 // myMSALObj.loginPopup(loginRequest).then(handleResponse).catch(error => {
                 //     console.error(error);
                 // });
