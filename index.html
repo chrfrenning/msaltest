@@ -24,18 +24,19 @@
                     scopes: ["https://management.azure.com/.default"]
                 };
 
+            var token;
             function doAuthStuff(msal, account) {
                 tokenRequest.account = account;
                 msal.acquireTokenSilent(tokenRequest).then(tokenResponse => { 
                     console.log(tokenResponse);
-                    doAzureStuff(tokenResponse.accessToken);
+                    listAzureSubscriptions(tokenResponse.accessToken);
+                    token = tokenResponse.accessToken;
                 });
             }
 
-            async function doAzureStuff(token) {
-                document.querySelector('#stuff').innerHTML = "Working on Azure stuff...";
+            async function listAzureSubscriptions(token) {
+                document.querySelector('#subscriptions').innerHTML = "Working on Azure stuff...";
 
-                //const storageAccount = "https://v1xuyault.blob.core.windows.net";
                 const azureManagementBaseUrl = "https://management.azure.com/subscriptions/?api-version=2020-06-01";
                 
                 const header_data = { 'Authorization' : 'Bearer ' + token}
@@ -45,14 +46,81 @@
                     
                     var m = "<h2>Your subscriptions:</h2>";
                     json.value.forEach( sub => {
-                        m += "<div>" + sub.displayName + "</div>";
+                        m += `<div onClick='listStorageAccounts("${sub.id}");'>${sub.displayName}</div>`;
                     });
 
-                    document.querySelector('#stuff').innerHTML = m;
+                    document.querySelector('#subscriptions').innerHTML = m;
                 }
                 else {
                     // nah
                 }
+            }
+
+            async function listStorageAccounts(subscriptionId) {
+                var m = `Listing storage accounts for ${subscriptionId}...`;
+                document.querySelector('#storage').innerHTML = m;
+
+                const header_data = { 'Authorization' : 'Bearer ' + token}
+                let result = await fetch("https://management.azure.com" + subscriptionId + "/providers/Microsoft.Storage/storageAccounts?api-version=2019-06-01", { headers : header_data });
+                if ( result.ok ) {
+                    let json = await result.json();
+                    console.log(json);   
+
+                    for ( var n = 0; n < json.value.length; n++ ) {
+                        let result = await fetch("https://management.azure.com" + json.value[n].id + "/listKeys?api-version=2019-06-01", { method: 'POST', headers: header_data });
+                        let keys = await result.json();
+                        console.log(keys);
+                        json.value[n].access_key = keys.keys[0].value;
+                    }
+                    
+                    m = "<h2>Storage Accounts:</h2>";
+                    json.value.forEach( storAcc => {
+                        m += `<div onClick='listContainers("${storAcc.id}", "${storAcc.properties.primaryEndpoints.blob}", "${storAcc.access_key}");'>${storAcc.name}</div>`;
+                    })
+                }
+
+                document.querySelector('#storage').innerHTML = m;
+            }
+
+            async function listContainers(storageId,endpoint,key) {
+                var m = `Listing containers for ${storageId}...`;
+                document.querySelector('#containers').innerHTML = m;
+
+                const header_data = { 'Authorization' : 'Bearer ' + token}
+                let result = await fetch("https://management.azure.com" + storageId + "/blobServices/default/containers?api-version=2019-06-01", { headers : header_data });
+                if ( result.ok ) {
+                    let json = await result.json();
+                    console.log(json);                    
+
+                    m = "<h2>Blob Containers:</h2>";
+                    json.value.forEach( container => {
+                        m += `<div onClick='listBlobs("${endpoint}${container.name}", "${container.accessKey}");'>${container.name}</div>`;
+                    })
+                }
+
+                document.querySelector('#containers').innerHTML = m;
+            }
+            
+            async function listBlobs(endpoint,accessKey) {
+                var m = `Listing blobs for ${endpoint}...`;
+                document.querySelector('#blobs').innerHTML = m;
+
+                // This is where it is breaking : we're now moving out of the scope we have through Azure AD,
+                // and need a SAS url to continue working with the services of the container - list, download, upload blobs
+                // Key is to create SAS signatures using the account key (unless there is an api to do so.)
+
+                const header_data = { 'Authorization' : 'Bearer ' + token}
+                let result = await fetch(endpoint, { headers : header_data });
+                if ( result.ok ) {
+                    let json = await result.json();
+                    console.log(json);                    
+                    m = "<h2>Blobs:</h2>";
+                    json.value.forEach( container => {
+                        m += `<div onClick='listContainers("${container.id}");'>${container.name}</div>`;
+                    })
+                }
+
+                document.querySelector('#blobs').innerHTML = m;
             }
 
         </script>
@@ -62,12 +130,17 @@
 
     <body>
         <div id="hellomsg">Hello world!</div>
-        <div id="stuff"></div>
-        <div>Version: 12:42</div>
+        <span>When stuff appears, you can click it to navigate deeper (even if it doesn't look that way).</span>
+
+        <div id="subscriptions"></div>
+        <div id="storage"></div>
+        <div id="containers"></div>
+        <div id="blobs"></div>
+        <div style="margin-top:50px">Version: 14:52</div>
 
         <script>
             // fix for local dev and debug
-            if ( document.documentURI.indexOf("localhost")>0) {
+            if ( document.documentURI.indexOf("http://localhost:5501") == 0) {
                 msalConfig.auth.redirectUri = "http://localhost:5501/";
             }
 
@@ -86,8 +159,6 @@
                 document.querySelector('#hellomsg').innerHTML = "Hello, " + username;
 
                 doAuthStuff(myMSALObj, currentAccounts[0]);
-
-                //doAzureStuff();
             } 
             else {
                 console.warn("spooky multiple accounts?");
