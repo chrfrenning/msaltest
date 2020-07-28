@@ -1,12 +1,12 @@
 <html>
     <head>
         <script>
-            const msalConfig = {
+            var msalConfig = {
                 auth: {
                     clientId: "58d93311-0687-4204-9f71-802312070336",
                     authority: "https://login.microsoftonline.com/christopherfrenning.onmicrosoft.com",
                     redirectUri: "https://agreeable-mud-0c21e7f03.azurestaticapps.net/",
-                    //redirectUri: "http://localhost:5501/"
+                    
                 },
                 cache: {
                     cacheLocation: "sessionStorage", // This configures where your cache will be stored
@@ -66,11 +66,17 @@
         <div>Version: 12:42</div>
 
         <script>
+            // fix for local dev and debug
+            if ( document.documentURI.indexOf("localhost")) {
+                msalConfig.auth.redirectUri = "http://localhost:5501/";
+            }
+
+            // create auth object and check if we're authenticated
             const myMSALObj = new msal.PublicClientApplication(msalConfig);
             const currentAccounts = myMSALObj.getAllAccounts();
             if (currentAccounts === null) {
-                myMSALObj.loginRedirect(loginRequest);
-                //myMSALObj.loginPopup(loginRequest);
+                //myMSALObj.loginRedirect(loginRequest);
+                myMSALObj.loginPopup(loginRequest);
                 // myMSALObj.loginPopup(loginRequest).then(handleResponse).catch(error => {
                 //     console.error(error);
                 // });
