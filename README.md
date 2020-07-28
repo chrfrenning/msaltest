@@ -7,3 +7,10 @@ Commits to master branch on this repo will automatically update the website.
 1. Application is registered in Active Directory on tenant christopherfrenning.onmicrosoft.com
 1. Enable CORS on storage account
 1. Very simple index.html page with js calling msal.js, opens popup for auth (works!)
+1. Set API Permissions on application; add Azure Service Management : user_impersonation
+
+
+
+Notes
+
+* Scope for azure management: https://management.azure.com/.default

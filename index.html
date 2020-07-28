@@ -16,12 +16,12 @@
 
                 // Add scopes here for ID token to be used at Microsoft identity platform endpoints.
                 const loginRequest = {
-                    scopes: ["openid", "profile", "User.Read"]
+                    scopes: ["https://management.azure.com/.default"]
                 };
 
                 // Add scopes here for access token to be used at Microsoft Graph API endpoints.
                 const tokenRequest = {
-                    scopes: ["User.Read"]
+                    scopes: ["https://management.azure.com/.default"]
                 };
 
             function doAuthStuff(msal, account) {
@@ -36,15 +36,23 @@
                 document.querySelector('#stuff').innerHTML = "Working on Azure stuff...";
 
                 //const storageAccount = "https://v1xuyault.blob.core.windows.net";
-                const azureManagementBaseUrl = "https://management.azure.com/subscriptions/?api-version=2019-12-01";
+                const azureManagementBaseUrl = "https://management.azure.com/subscriptions/?api-version=2020-06-01";
                 
-                const headers = { 'Authorization' : 'Bearer ' + token}
-                let result = await fetch(azureManagementBaseUrl, { headers });
+                const header_data = { 'Authorization' : 'Bearer ' + token}
+                let result = await fetch(azureManagementBaseUrl, { headers : header_data });
                 if ( result.ok ) {
                     let json = await result.json();
-                    document.querySelector('#stuff').innerHTML = records;
+                    
+                    var m = "<h2>Your subscriptions:</h2>";
+                    json.value.forEach( sub => {
+                        m += "<div>" + sub.displayName + "</div>";
+                    });
+
+                    document.querySelector('#stuff').innerHTML = m;
                 }
-                
+                else {
+                    // nah
+                }
             }
 
         </script>
@@ -60,7 +68,8 @@
             const myMSALObj = new msal.PublicClientApplication(msalConfig);
             const currentAccounts = myMSALObj.getAllAccounts();
             if (currentAccounts === null) {
-                myMSALObj.loginRedirect(loginRequest);
+                //myMSALObj.loginRedirect(loginRequest);
+                myMSALObj.loginPopup(loginRequest);
                 // myMSALObj.loginPopup(loginRequest).then(handleResponse).catch(error => {
                 //     console.error(error);
                 // });
