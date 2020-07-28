@@ -1,5 +1,32 @@
 <html>
-<body>
-Hello world!
-</body>
+    <head>
+        <script>
+            const msalConfig = {
+                auth: {
+                    clientId: "58d93311-0687-4204-9f71-802312070336",
+                    authority: "https://login.microsoftonline.com",
+                    redirectUri: "https://agreeable-mud-0c21e7f03.azurestaticapps.net/",
+                },
+                cache: {
+                    cacheLocation: "sessionStorage", // This configures where your cache will be stored
+                    storeAuthStateInCookie: false, // Set this to "true" if you are having issues on IE11 or Edge
+                }
+                };
+
+                // Add scopes here for ID token to be used at Microsoft identity platform endpoints.
+                const loginRequest = {
+                scopes: ["openid", "profile", "User.Read"]
+                };
+
+                // Add scopes here for access token to be used at Microsoft Graph API endpoints.
+                const tokenRequest = {
+                scopes: ["User.Read", "Mail.Read"]
+                };
+        </script>
+        <script src="https://alcdn.msauth.net/browser/2.0.0/js/msal-browser.js" crossorigin="anonymous"></script>
+    </head>
+
+    <body>
+        Hello world!
+    </body>
 </html>
