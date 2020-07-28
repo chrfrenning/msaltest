@@ -16,26 +16,30 @@
 
                 // Add scopes here for ID token to be used at Microsoft identity platform endpoints.
                 const loginRequest = {
-                scopes: ["openid", "profile", "User.Read"]
+                    scopes: ["openid", "profile", "User.Read"]
                 };
 
                 // Add scopes here for access token to be used at Microsoft Graph API endpoints.
                 const tokenRequest = {
-                scopes: ["User.Read", "Mail.Read"]
+                    scopes: ["User.Read"]
                 };
-        </script>
 
-        <script>
+            function doAuthStuff(msal, account) {
+                tokenRequest.account = account;
+                msal.acquireTokenSilent(tokenRequest).then(tokenResponse => { 
+                    console.log(tokenResponse);
+                    doAzureStuff(tokenResponse.accessToken);
+                });
+            }
 
-            async function doAzureStuff() {
+            async function doAzureStuff(token) {
                 document.querySelector('#stuff').innerHTML = "Working on Azure stuff...";
 
+                //const storageAccount = "https://v1xuyault.blob.core.windows.net";
                 const azureManagementBaseUrl = "https://management.azure.com/subscriptions/?api-version=2019-12-01";
                 
-
-                const storageAccount = "https://v1xuyault.blob.core.windows.net";
-                
-                let result = await fetch(storageAccount + '/?comp=list');
+                const headers = { 'Authorization' : 'Bearer ' + token}
+                let result = await fetch(azureManagementBaseUrl, { headers });
                 if ( result.ok ) {
                     let json = await result.json();
                     document.querySelector('#stuff').innerHTML = records;
@@ -65,10 +69,12 @@
                 username = currentAccounts[0].username;
                 document.querySelector('#hellomsg').innerHTML = "Hello, " + username;
 
-                doAzureStuff();
+                doAuthStuff(myMSALObj, currentAccounts[0]);
+
+                //doAzureStuff();
             } 
             else {
-                console.warn("spooky");
+                console.warn("spooky multiple accounts?");
             }
         </script>
     </body>
