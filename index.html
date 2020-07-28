@@ -67,7 +67,7 @@
 
         <script>
             // fix for local dev and debug
-            if ( document.documentURI.indexOf("localhost")) {
+            if ( document.documentURI.indexOf("localhost")>0) {
                 msalConfig.auth.redirectUri = "http://localhost:5501/";
             }
 
