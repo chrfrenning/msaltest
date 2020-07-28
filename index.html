@@ -4,8 +4,9 @@
             const msalConfig = {
                 auth: {
                     clientId: "58d93311-0687-4204-9f71-802312070336",
-                    authority: "https://login.microsoftonline.com",
-                    redirectUri: "https://agreeable-mud-0c21e7f03.azurestaticapps.net/",
+                    authority: "https://login.microsoftonline.com/christopherfrenning.onmicrosoft.com",
+                    //redirectUri: "https://agreeable-mud-0c21e7f03.azurestaticapps.net/",
+                    redirectUri: "http://localhost:5501/"
                 },
                 cache: {
                     cacheLocation: "sessionStorage", // This configures where your cache will be stored
@@ -23,10 +24,54 @@
                 scopes: ["User.Read", "Mail.Read"]
                 };
         </script>
+
+        <script>
+
+            async function doAzureStuff() {
+                document.querySelector('#stuff').innerHTML = "Working on Azure stuff...";
+
+                const azureManagementBaseUrl = "https://management.azure.com/subscriptions/?api-version=2019-12-01";
+                
+
+                const storageAccount = "https://v1xuyault.blob.core.windows.net";
+                
+                let result = await fetch(storageAccount + '/?comp=list');
+                if ( result.ok ) {
+                    let json = await result.json();
+                    document.querySelector('#stuff').innerHTML = records;
+                }
+                
+            }
+
+        </script>
+
         <script src="https://alcdn.msauth.net/browser/2.0.0/js/msal-browser.js" crossorigin="anonymous"></script>
     </head>
 
     <body>
-        Hello world!
+        <div id="hellomsg">Hello world!</div>
+        <div id="stuff"></div>
+
+        <script>
+            const myMSALObj = new msal.PublicClientApplication(msalConfig);
+            const currentAccounts = myMSALObj.getAllAccounts();
+            if (currentAccounts === null) {
+                myMSALObj.loginRedirect(loginRequest);
+                // myMSALObj.loginPopup(loginRequest).then(handleResponse).catch(error => {
+                //     console.error(error);
+                // });
+            }
+            else if (currentAccounts.length == 1 ) {
+                username = currentAccounts[0].username;
+                document.querySelector('#hellomsg').innerHTML = "Hello, " + username;
+
+                doAzureStuff();
+            } 
+            else {
+                console.warn("spooky");
+            }
+        </script>
     </body>
+
+    
 </html>
